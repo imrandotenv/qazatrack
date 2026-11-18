@@ -342,9 +342,19 @@ export function FeatureGuideModal({ open, onClose }: FeatureGuideModalProps) {
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 text-xs font-bold">
                     1
                   </span>
-                  <p>
-                    <strong className="text-[var(--foreground)]">Pure Privacy:</strong> All logs remain strictly in your browser&apos;s local storage. No accounts, no ads, and zero analytics tracking.
-                  </p>
+                  <div>
+                    <p>
+                      <strong className="text-[var(--foreground)]">Pure Privacy:</strong> All logs remain strictly in your browser&apos;s local storage. No accounts, no ads, and zero analytics tracking.
+                    </p>
+                    <a
+                      href="https://github.com/imrandotenv/qazatrack"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+                    >
+                      100% Open-Source — Verify on GitHub ↗
+                    </a>
+                  </div>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 text-xs font-bold">

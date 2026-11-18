@@ -9,6 +9,7 @@ describe('Theme, First-Visit Header & Open Source Transparency', () => {
   const headerPath = path.resolve(__dirname, '../src/components/Header.tsx');
   const onboardingPath = path.resolve(__dirname, '../src/components/OnboardingWizard.tsx');
   const settingsPath = path.resolve(__dirname, '../src/components/SettingsModal.tsx');
+  const featureGuidePath = path.resolve(__dirname, '../src/components/FeatureGuideModal.tsx');
   const footerPath = path.resolve(__dirname, '../src/components/Footer.tsx');
 
   const layoutCode = fs.readFileSync(layoutPath, 'utf8');
@@ -16,6 +17,7 @@ describe('Theme, First-Visit Header & Open Source Transparency', () => {
   const headerCode = fs.readFileSync(headerPath, 'utf8');
   const onboardingCode = fs.readFileSync(onboardingPath, 'utf8');
   const settingsCode = fs.readFileSync(settingsPath, 'utf8');
+  const featureGuideCode = fs.readFileSync(featureGuidePath, 'utf8');
   const footerCode = fs.readFileSync(footerPath, 'utf8');
 
   it('layout.tsx enforces Light Mode default without dark-mode flash', () => {
@@ -38,7 +40,7 @@ describe('Theme, First-Visit Header & Open Source Transparency', () => {
     assert.ok(pageCode.includes('isOnboarding={!isOnboarded}'));
   });
 
-  it('OnboardingWizard and SettingsModal include discreet open-source verification links', () => {
+  it('OnboardingWizard, SettingsModal and FeatureGuideModal include discreet open-source verification links', () => {
     const targetLink = 'https://github.com/imrandotenv/qazatrack';
     const targetText = '100% Open-Source — Verify on GitHub ↗';
 
@@ -51,6 +53,11 @@ describe('Theme, First-Visit Header & Open Source Transparency', () => {
     assert.ok(settingsCode.includes(targetText));
     assert.ok(settingsCode.includes('target="_blank"'));
     assert.ok(settingsCode.includes('rel="noopener noreferrer"'));
+
+    assert.ok(featureGuideCode.includes(targetLink));
+    assert.ok(featureGuideCode.includes(targetText));
+    assert.ok(featureGuideCode.includes('target="_blank"'));
+    assert.ok(featureGuideCode.includes('rel="noopener noreferrer"'));
   });
 
   it('page.tsx contains transparency Q&A item in FAQ section and JSON-LD structured data', () => {
@@ -83,6 +90,7 @@ describe('Theme, First-Visit Header & Open Source Transparency', () => {
       { name: 'Header', code: headerCode },
       { name: 'OnboardingWizard', code: onboardingCode },
       { name: 'SettingsModal', code: settingsCode },
+      { name: 'FeatureGuideModal', code: featureGuideCode },
       { name: 'Footer', code: footerCode },
       { name: 'Page', code: pageCode },
     ];
