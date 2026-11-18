@@ -60,6 +60,24 @@ export function Footer({ onInviteFriend, onSettings }: FooterProps) {
             <span>© 2026 QazaTrack. All rights reserved.</span>
             <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 font-bold text-emerald-900 dark:bg-emerald-400/15 dark:text-emerald-200">100% Offline &amp; Private · Zero Data Tracked</span>
           </div>
+          <div className="mt-4 flex flex-col gap-2 border-t border-slate-900/[0.08] pt-4 text-xs text-slate-500 dark:border-white/[0.08] dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <a
+              href="https://github.com/imrandotenv/qazatrack"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-fit transition-colors hover:text-emerald-700 hover:underline dark:hover:text-emerald-400"
+            >
+              Open Source (MIT) • View Source on GitHub ↗
+            </a>
+            <a
+              href="https://imranstack.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-fit font-medium transition-colors hover:text-emerald-700 hover:underline dark:hover:text-emerald-400"
+            >
+              Built by Imran
+            </a>
+          </div>
         </div>
       </footer>
 
@@ -112,6 +130,16 @@ export function Footer({ onInviteFriend, onSettings }: FooterProps) {
                   <p className="font-bold text-[var(--foreground)]">We use zero tracking cookies; all data stays locally on your device.</p>
                   <p>QazaTrack stores your prayer counts, daily check-ins, and theme preferences strictly in your browser&apos;s <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm dark:bg-slate-800">localStorage</code>. There are zero server uploads and zero analytics trackers.</p>
                   <p>You stay in control with the JSON Backup and Reset tools in Settings. Export a copy whenever you want, or reset your local data at any time.</p>
+                  <p className="pt-1">
+                    <a
+                      href="https://github.com/imrandotenv/qazatrack"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+                    >
+                      100% Open-Source — Verify on GitHub ↗
+                    </a>
+                  </p>
                 </>
               )}
               {legalTab === 'terms' && (

@@ -58,6 +58,14 @@ const faqStructuredData = {
         text: 'Yes. QazaTrack stores your progress locally on your device. Your data stays private unless you choose to export a backup.',
       },
     },
+    {
+      '@type': 'Question',
+      name: "How do I know my prayer data isn't tracked or uploaded?",
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "QazaTrack has no backend, no analytics trackers, and no login. Everything stays strictly inside your browser's local storage, and our entire codebase is 100% open-source on GitHub (github.com/imrandotenv/qazatrack) so anyone can inspect and verify it.",
+      },
+    },
   ],
 };
 
@@ -129,14 +137,13 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
       />
-      {isOnboarded && (
-        <Header
-          streak={state.streak}
-          onShareMilestone={() => setMilestoneOpen(true)}
-          onSettingsBackup={() => setSettingsOpen(true)}
-          onOpenFeatureGuide={handleOpenFeatureGuide}
-        />
-      )}
+      <Header
+        streak={state.streak}
+        isOnboarding={!isOnboarded}
+        onShareMilestone={() => setMilestoneOpen(true)}
+        onSettingsBackup={() => setSettingsOpen(true)}
+        onOpenFeatureGuide={handleOpenFeatureGuide}
+      />
       {!isOnboarded ? (
         <>
           <OnboardingWizard />
@@ -171,6 +178,21 @@ export default function HomePage() {
                   <h2 className="font-bold text-[var(--foreground)]">Is my Qaza prayer data stored privately?</h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
                     Yes. Your progress is stored locally on your device and stays private unless you choose to export a backup.
+                  </p>
+                </div>
+                <div>
+                  <h2 className="font-bold text-[var(--foreground)]">How do I know my prayer data isn&apos;t tracked or uploaded?</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                    QazaTrack has no backend, no analytics trackers, and no login. Everything stays strictly inside your browser&apos;s local storage, and our entire codebase is 100% open-source on{' '}
+                    <a
+                      href="https://github.com/imrandotenv/qazatrack"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-emerald-800 underline hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-emerald-100"
+                    >
+                      GitHub
+                    </a>{' '}
+                    (github.com/imrandotenv/qazatrack) so anyone can inspect and verify it.
                   </p>
                 </div>
               </div>

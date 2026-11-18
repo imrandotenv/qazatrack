@@ -241,7 +241,17 @@ export function SettingsModal({ open, onClose, onRecalculate, onOpenFeatureGuide
             <h2 id="settings-title" className="text-2xl font-bold tracking-[-0.03em] text-[var(--foreground)]">
               Settings &amp; backup
             </h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Everything stays on this device unless you export it.</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-2">
+              <span>Everything stays on this device unless you export it.</span>
+              <a
+                href="https://github.com/imrandotenv/qazatrack"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+              >
+                100% Open-Source — Verify on GitHub ↗
+              </a>
+            </p>
           </div>
           <button
             type="button"
@@ -259,8 +269,16 @@ export function SettingsModal({ open, onClose, onRecalculate, onOpenFeatureGuide
             <h3 id="profile-title" className="font-bold text-[var(--foreground)]">
               Calculation Profile
             </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
-              Saved locally on your device to tailor Fiqh exemptions
+            <p className="text-xs text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-2">
+              <span>Saved locally on your device to tailor Fiqh exemptions.</span>
+              <a
+                href="https://github.com/imrandotenv/qazatrack"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+              >
+                100% Open-Source — Verify on GitHub ↗
+              </a>
             </p>
           </div>
 
@@ -416,7 +434,17 @@ export function SettingsModal({ open, onClose, onRecalculate, onOpenFeatureGuide
 
         <section className="mt-8 border-t border-slate-200 pt-7 dark:border-slate-700" aria-labelledby="backup-title">
           <h3 id="backup-title" className="font-bold text-[var(--foreground)]">Private local backup</h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Export a copy before switching phones or clearing browser data.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-2">
+            <span>Export a copy before switching phones or clearing browser data.</span>
+            <a
+              href="https://github.com/imrandotenv/qazatrack"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+            >
+              100% Open-Source — Verify on GitHub ↗
+            </a>
+          </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"

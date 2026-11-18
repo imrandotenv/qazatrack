@@ -261,8 +261,16 @@ export function OnboardingWizard() {
                   <h3 className="text-base font-bold text-[var(--foreground)]">
                     Calculation Profile
                   </h3>
-                  <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
-                    Saved locally on your device to tailor Fiqh exemptions
+                  <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300 flex flex-wrap items-center gap-x-2">
+                    <span>Saved locally on your device to tailor Fiqh exemptions.</span>
+                    <a
+                      href="https://github.com/imrandotenv/qazatrack"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-xs font-semibold text-emerald-800 hover:underline dark:text-emerald-300"
+                    >
+                      100% Open-Source — Verify on GitHub ↗
+                    </a>
                   </p>
                 </div>
 
@@ -632,6 +640,17 @@ export function OnboardingWizard() {
               >
                 Continue to choose my pace
               </button>
+              <div className="mt-5 flex flex-col items-center justify-center gap-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span>100% Offline &amp; Private — Everything stays strictly inside your browser.</span>
+                <a
+                  href="https://github.com/imrandotenv/qazatrack"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-emerald-800 hover:underline dark:text-emerald-300"
+                >
+                  100% Open-Source — Verify on GitHub ↗
+                </a>
+              </div>
             </section>
           ) : (
             <section aria-labelledby="pace-heading">
@@ -680,6 +699,17 @@ export function OnboardingWizard() {
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <button type="button" onClick={() => handleGoToStep(1)} className="min-h-[52px] rounded-xl px-5 font-bold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Back</button>
                 <button type="button" onClick={startPlan} className="min-h-[52px] flex-1 rounded-xl bg-emerald-700 px-5 text-base font-bold text-white hover:bg-emerald-800 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400">Start Day 1</button>
+              </div>
+              <div className="mt-5 flex flex-col items-center justify-center gap-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span>100% Offline &amp; Private — Everything stays strictly inside your browser.</span>
+                <a
+                  href="https://github.com/imrandotenv/qazatrack"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-emerald-800 hover:underline dark:text-emerald-300"
+                >
+                  100% Open-Source — Verify on GitHub ↗
+                </a>
               </div>
             </section>
           )}
