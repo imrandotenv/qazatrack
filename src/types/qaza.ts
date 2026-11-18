@@ -18,6 +18,8 @@ export type DailyLogEntry = {
 
 export type PaceMode = 'gentle' | 'steady' | 'custom';
 
+export type CalculationProfile = 'brother' | 'sister';
+
 export type QazaState = {
   initialDebt: QazaCounts;
   cleared: QazaCounts;
@@ -30,6 +32,7 @@ export type QazaState = {
   settings: {
     showRakats: boolean;
     includeWitr: boolean;
+    calculationProfile?: CalculationProfile;
   };
   referralCode: string;
   invitesSharedCount: number;

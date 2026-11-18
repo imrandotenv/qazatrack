@@ -57,6 +57,7 @@ const emptyPresentStatus = (): Record<PrayerKey, TodayPrayerStatus> => ({
 const defaultSettings = (): QazaState['settings'] => ({
   showRakats: true,
   includeWitr: true,
+  calculationProfile: 'brother',
 });
 
 function generateReferralCode(): string {
@@ -239,6 +240,8 @@ function normalizeState(raw: unknown): QazaState {
   const settings = {
     showRakats: typeof settingsRecord.showRakats === 'boolean' ? settingsRecord.showRakats : true,
     includeWitr: typeof settingsRecord.includeWitr === 'boolean' ? settingsRecord.includeWitr : true,
+    calculationProfile:
+      settingsRecord.calculationProfile === 'sister' ? ('sister' as const) : ('brother' as const),
   };
 
   const referralCode =

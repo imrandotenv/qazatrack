@@ -2,9 +2,13 @@
 
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useQazaStore } from '../hooks/useQazaStore';
-import { calculatePayoffProjection } from '../lib/calculator';
+import {
+  calculateAttendedJumuah,
+  calculatePayoffProjection,
+  estimateFromDuration,
+} from '../lib/calculator';
 import { useModalA11y } from '../hooks/useModalA11y';
-import type { PaceMode, QazaCounts } from '../types/qaza';
+import type { CalculationProfile, PaceMode, QazaCounts } from '../types/qaza';
 
 type SettingsModalProps = {
   open: boolean;
@@ -41,10 +45,25 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
   const [customTarget, setCustomTarget] = useState(
     state.paceMode === 'custom' ? state.dailyPrayersTarget : 3,
   );
+  const [profile, setProfile] = useState<CalculationProfile>(
+    state.settings.calculationProfile ?? 'brother',
+  );
   const [editingDebt, setEditingDebt] = useState(false);
   const [debt, setDebt] = useState<QazaCounts>(state.initialDebt);
   const [confirmReset, setConfirmReset] = useState(false);
   const [error, setError] = useState('');
+
+  // Duration recalculation state inside settings
+  const [recalcMode, setRecalcMode] = useState<'duration' | 'exact'>('exact');
+  const [recalcYears, setRecalcYears] = useState(1);
+  const [recalcMonths, setRecalcMonths] = useState(0);
+  const [recalcHaydEnabled, setRecalcHaydEnabled] = useState(
+    (state.settings.calculationProfile ?? 'brother') === 'sister',
+  );
+  const [recalcHaydDays, setRecalcHaydDays] = useState(7);
+  const [recalcJumuahAttendance, setRecalcJumuahAttendance] = useState(0);
+  const [recalcCustomExemptionDays, setRecalcCustomExemptionDays] = useState(0);
+
   const target = paceMode === 'gentle' ? 1 : paceMode === 'steady' ? 2 : customTarget;
 
   useModalA11y(open, onClose);
@@ -53,8 +72,54 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
       setPaceMode(state.paceMode);
       setCustomTarget(state.paceMode === 'custom' ? state.dailyPrayersTarget : 3);
       setDebt(state.initialDebt);
+      const activeProfile = state.settings.calculationProfile ?? 'brother';
+      setProfile(activeProfile);
+      if (activeProfile === 'brother') {
+        setRecalcHaydEnabled(false);
+        setRecalcHaydDays(7);
+      } else {
+        setRecalcJumuahAttendance(0);
+        setRecalcCustomExemptionDays(0);
+        setRecalcHaydEnabled(true);
+        setRecalcHaydDays(7);
+      }
     }
-  }, [editingDebt, open, state.initialDebt, state.dailyPrayersTarget, state.paceMode]);
+  }, [editingDebt, open, state.initialDebt, state.dailyPrayersTarget, state.paceMode, state.settings.calculationProfile]);
+
+  function handleProfileChange(newProfile: CalculationProfile) {
+    setProfile(newProfile);
+    updatePreferences({ calculationProfile: newProfile });
+    if (newProfile === 'brother') {
+      setRecalcHaydEnabled(false);
+      setRecalcHaydDays(7);
+    } else {
+      setRecalcJumuahAttendance(0);
+      setRecalcCustomExemptionDays(0);
+      setRecalcHaydEnabled(true);
+      setRecalcHaydDays(7);
+    }
+  }
+
+  const durationCalculatedDebt = useMemo(() => {
+    return estimateFromDuration({
+      years: recalcYears,
+      months: recalcMonths,
+      profile,
+      includeExemption: recalcHaydEnabled,
+      monthlyExemptionDays: recalcHaydEnabled ? recalcHaydDays : 0,
+      jumuahAttendance: recalcJumuahAttendance,
+      customExemptionDays: recalcCustomExemptionDays,
+      missedFasts: recalcYears * 30,
+    });
+  }, [
+    profile,
+    recalcCustomExemptionDays,
+    recalcHaydDays,
+    recalcHaydEnabled,
+    recalcJumuahAttendance,
+    recalcMonths,
+    recalcYears,
+  ]);
 
   const projection = useMemo(
     () =>
@@ -69,8 +134,9 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
           fasts: Math.max(0, state.initialDebt.fasts - state.cleared.fasts),
         },
         target,
+        paceMode,
       ),
-    [state.cleared, state.initialDebt, target],
+    [state.cleared, state.initialDebt, target, paceMode],
   );
 
   if (!open) {
@@ -181,6 +247,86 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
             ×
           </button>
         </div>
+
+        {/* Calculation Profile */}
+        <section className="mt-7" aria-labelledby="profile-title">
+          <div className="space-y-1">
+            <h3 id="profile-title" className="font-bold text-[var(--foreground)]">
+              Calculation Profile
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300">
+              Saved locally on your device to tailor Fiqh exemptions
+            </p>
+          </div>
+
+          <div role="radiogroup" aria-label="Calculation Profile" className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={profile === 'brother'}
+              onClick={() => handleProfileChange('brother')}
+              className={`flex items-start justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 ${
+                profile === 'brother'
+                  ? 'border-emerald-700 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-400 dark:bg-emerald-950/40 dark:ring-emerald-400/20'
+                  : 'border-slate-200 bg-[var(--card-background)] hover:border-slate-300 dark:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="flex items-center gap-2">
+                  <span className="text-xl" aria-hidden="true">🧔</span>
+                  <span className="font-bold text-[var(--foreground)]">Brother</span>
+                </span>
+                <span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">
+                  Includes Friday Jumu&apos;ah adjustment
+                </span>
+              </div>
+              <span
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  profile === 'brother'
+                    ? 'border-emerald-700 bg-emerald-700 dark:border-emerald-400 dark:bg-emerald-400'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
+              >
+                {profile === 'brother' && (
+                  <span className="h-2 w-2 rounded-full bg-white dark:bg-slate-950" />
+                )}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              aria-checked={profile === 'sister'}
+              onClick={() => handleProfileChange('sister')}
+              className={`flex items-start justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 ${
+                profile === 'sister'
+                  ? 'border-emerald-700 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-400 dark:bg-emerald-950/40 dark:ring-emerald-400/20'
+                  : 'border-slate-200 bg-[var(--card-background)] hover:border-slate-300 dark:border-slate-700'
+              }`}
+            >
+              <div>
+                <span className="flex items-center gap-2">
+                  <span className="text-xl" aria-hidden="true">🧕</span>
+                  <span className="font-bold text-[var(--foreground)]">Sister</span>
+                </span>
+                <span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">
+                  Includes monthly Hayd Salah exemption
+                </span>
+              </div>
+              <span
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  profile === 'sister'
+                    ? 'border-emerald-700 bg-emerald-700 dark:border-emerald-400 dark:bg-emerald-400'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
+              >
+                {profile === 'sister' && (
+                  <span className="h-2 w-2 rounded-full bg-white dark:bg-slate-950" />
+                )}
+              </span>
+            </button>
+          </div>
+        </section>
 
         <section className="mt-7" aria-labelledby="pace-title">
           <h3 id="pace-title" className="font-bold text-[var(--foreground)]">Daily payoff pace</h3>
@@ -301,8 +447,184 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
             </button>
           </div>
           {editingDebt && (
-            <>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setRecalcMode('exact')}
+                  className={`min-h-[40px] rounded-lg px-3 text-xs font-bold ${
+                    recalcMode === 'exact'
+                      ? 'bg-white text-emerald-800 shadow-sm dark:bg-slate-700 dark:text-emerald-300'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  Exact Counts
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRecalcMode('duration')}
+                  className={`min-h-[40px] rounded-lg px-3 text-xs font-bold ${
+                    recalcMode === 'duration'
+                      ? 'bg-white text-emerald-800 shadow-sm dark:bg-slate-700 dark:text-emerald-300'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  }`}
+                >
+                  By Years &amp; Profile
+                </button>
+              </div>
+
+              {recalcMode === 'duration' ? (
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="text-xs font-semibold text-[var(--foreground)]">
+                      Years
+                      <input
+                        type="number"
+                        min="0"
+                        max="999"
+                        value={recalcYears}
+                        onChange={(e) => setRecalcYears(Math.max(0, Number(e.target.value) || 0))}
+                        className="mt-1 min-h-[40px] w-full rounded-lg border border-slate-200 bg-[var(--card-background)] px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-700 dark:border-slate-700"
+                      />
+                    </label>
+                    <label className="text-xs font-semibold text-[var(--foreground)]">
+                      Months
+                      <input
+                        type="number"
+                        min="0"
+                        max="11"
+                        value={recalcMonths}
+                        onChange={(e) => setRecalcMonths(Math.min(11, Math.max(0, Number(e.target.value) || 0)))}
+                        className="mt-1 min-h-[40px] w-full rounded-lg border border-slate-200 bg-[var(--card-background)] px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-700 dark:border-slate-700"
+                      />
+                    </label>
+                  </div>
+
+                  {profile === 'brother' ? (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
+                          <span>Friday Jumu&apos;ah Prayers Attended</span>
+                          {recalcJumuahAttendance > 0 && (
+                            <span className="text-emerald-700 dark:text-emerald-300">
+                              −{calculateAttendedJumuah(recalcYears * 12 + recalcMonths, recalcJumuahAttendance)} Dhuhr
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-2 grid grid-cols-5 gap-1">
+                          {[
+                            { value: 0, label: '0%' },
+                            { value: 0.25, label: '25%' },
+                            { value: 0.5, label: '50%' },
+                            { value: 0.75, label: '75%' },
+                            { value: 1, label: '100%' },
+                          ].map((preset) => (
+                            <button
+                              key={preset.value}
+                              type="button"
+                              aria-pressed={recalcJumuahAttendance === preset.value}
+                              onClick={() => setRecalcJumuahAttendance(preset.value)}
+                              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                                recalcJumuahAttendance === preset.value
+                                  ? 'bg-emerald-700 text-white dark:bg-emerald-500 dark:text-slate-950'
+                                  : 'bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200'
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <label className="block text-xs font-semibold text-[var(--foreground)]">
+                        Custom Exemptions (Days)
+                        <input
+                          type="number"
+                          min="0"
+                          value={recalcCustomExemptionDays}
+                          onChange={(e) => setRecalcCustomExemptionDays(Math.max(0, Number(e.target.value) || 0))}
+                          className="mt-1 min-h-[40px] w-full rounded-lg border border-slate-200 bg-[var(--card-background)] px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-700 dark:border-slate-700"
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={recalcHaydEnabled}
+                        onClick={() => setRecalcHaydEnabled((c) => !c)}
+                        className="flex min-h-[48px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-[var(--card-background)] px-3 text-left dark:border-slate-700"
+                      >
+                        <span className="text-xs font-semibold text-[var(--foreground)]">
+                          Sisters&apos; Monthly Exemption (Menstruation / Hayd)
+                        </span>
+                        <span
+                          className={`relative h-6 w-10 shrink-0 rounded-full p-0.5 ${
+                            recalcHaydEnabled ? 'bg-emerald-700 dark:bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                          }`}
+                        >
+                          <span
+                            className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                              recalcHaydEnabled ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </span>
+                      </button>
+
+                      {recalcHaydEnabled && (
+                        <div className="space-y-1">
+                          <label htmlFor="recalc-hayd-days" className="block text-xs font-semibold text-[var(--foreground)]">
+                            Exemption days per month (5–10, default 7)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={recalcHaydDays <= 5}
+                              onClick={() => setRecalcHaydDays((d) => Math.max(5, d - 1))}
+                              aria-label="Decrease exemption days per month"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-[var(--card-background)] text-lg font-bold text-[var(--foreground)] hover:bg-slate-100 disabled:opacity-35 dark:border-slate-700 dark:hover:bg-slate-800"
+                            >
+                              −
+                            </button>
+                            <input
+                              id="recalc-hayd-days"
+                              type="number"
+                              min="5"
+                              max="10"
+                              value={recalcHaydDays}
+                              onChange={(e) =>
+                                setRecalcHaydDays(Math.min(10, Math.max(5, Number(e.target.value) || 7)))
+                              }
+                              className="min-h-[36px] w-16 rounded-lg border border-slate-200 bg-[var(--card-background)] px-2 text-center text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-700 dark:border-slate-700"
+                            />
+                            <button
+                              type="button"
+                              disabled={recalcHaydDays >= 10}
+                              onClick={() => setRecalcHaydDays((d) => Math.min(10, d + 1))}
+                              aria-label="Increase exemption days per month"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-[var(--card-background)] text-lg font-bold text-[var(--foreground)] hover:bg-slate-100 disabled:opacity-35 dark:border-slate-700 dark:hover:bg-slate-800"
+                            >
+                              +
+                            </button>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">days/month</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setDebt(durationCalculatedDebt)}
+                    className="w-full rounded-lg bg-emerald-100 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-900/60 dark:text-emerald-200"
+                  >
+                    Apply Duration Calculation to Debt Fields ↓
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {debtFields.map(([key, label]) => (
                   <label key={key} className="text-sm font-semibold text-[var(--foreground)]">
                     {label}
@@ -323,7 +645,7 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
               >
                 Save initial debt
               </button>
-            </>
+            </div>
           )}
         </section>
 
