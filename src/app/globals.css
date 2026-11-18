@@ -76,3 +76,9 @@ input[type='number']::-webkit-outer-spin-button {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Prevent scroll anchoring jumps when onboarding content shrinks or expands */
+footer,
+section[aria-labelledby='faq-heading'] {
+  overflow-anchor: none;
+}

@@ -6,6 +6,7 @@ import {
   calculateAttendedJumuah,
   calculatePayoffProjection,
   estimateFromDuration,
+  JUMUAH_PRESETS,
 } from '../lib/calculator';
 import { useModalA11y } from '../hooks/useModalA11y';
 import type { CalculationProfile, PaceMode, QazaCounts } from '../types/qaza';
@@ -14,6 +15,7 @@ type SettingsModalProps = {
   open: boolean;
   onClose: () => void;
   onRecalculate?: () => void;
+  onOpenFeatureGuide?: () => void;
 };
 
 const debtFields: Array<[keyof QazaCounts, string]> = [
@@ -32,7 +34,7 @@ function formatDate(dateString: string): string {
   );
 }
 
-export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalProps) {
+export function SettingsModal({ open, onClose, onRecalculate, onOpenFeatureGuide }: SettingsModalProps) {
   const {
     state,
     updatePace,
@@ -213,6 +215,9 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
 
   function resetProgress() {
     resetAllData();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('qazatrack_feature_guide_seen');
+    }
     setConfirmReset(false);
     onClose();
   }
@@ -503,36 +508,119 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
                   {profile === 'brother' ? (
                     <div className="space-y-3">
                       <div>
-                        <div className="flex items-center justify-between text-xs font-semibold text-[var(--foreground)]">
-                          <span>Friday Jumu&apos;ah Prayers Attended</span>
-                          {recalcJumuahAttendance > 0 && (
-                            <span className="text-emerald-700 dark:text-emerald-300">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="block text-xs sm:text-sm font-semibold text-[var(--foreground)]">
+                              Friday Jumu&apos;ah Prayers Attended
+                            </span>
+                            <span className="mt-0.5 block text-[11px] text-slate-600 dark:text-slate-300">
+                              Replaces Dhuhr for attended Fridays, deducting from debt.
+                            </span>
+                          </div>
+                          {recalcYears * 12 + recalcMonths > 0 && recalcJumuahAttendance > 0 && (
+                            <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 shadow-xs dark:border-emerald-800/60 dark:bg-emerald-950/80 dark:text-emerald-300">
                               −{calculateAttendedJumuah(recalcYears * 12 + recalcMonths, recalcJumuahAttendance)} Dhuhr
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 grid grid-cols-5 gap-1">
-                          {[
-                            { value: 0, label: '0%' },
-                            { value: 0.25, label: '25%' },
-                            { value: 0.5, label: '50%' },
-                            { value: 0.75, label: '75%' },
-                            { value: 1, label: '100%' },
-                          ].map((preset) => (
-                            <button
-                              key={preset.value}
-                              type="button"
-                              aria-pressed={recalcJumuahAttendance === preset.value}
-                              onClick={() => setRecalcJumuahAttendance(preset.value)}
-                              className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
-                                recalcJumuahAttendance === preset.value
-                                  ? 'bg-emerald-700 text-white dark:bg-emerald-500 dark:text-slate-950'
-                                  : 'bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200'
-                              }`}
-                            >
-                              {preset.label}
-                            </button>
-                          ))}
+
+                        {/* Mobile view: 2-row tactile pill grid (Row 1: grid-cols-3, Row 2: grid-cols-2) */}
+                        <div className="mt-2.5 space-y-2 sm:hidden">
+                          <div className="grid grid-cols-3 gap-2">
+                            {JUMUAH_PRESETS.slice(0, 3).map((preset) => {
+                              const isSelected = recalcJumuahAttendance === preset.value;
+                              return (
+                                <button
+                                  key={preset.value}
+                                  type="button"
+                                  aria-pressed={isSelected}
+                                  aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                  title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                  onClick={() => setRecalcJumuahAttendance(preset.value)}
+                                  className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-all active:scale-[0.98] ${
+                                    isSelected
+                                      ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                      : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                  <span
+                                    className={`mt-0.5 text-[11px] leading-tight whitespace-nowrap ${
+                                      isSelected
+                                        ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {preset.sub}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {JUMUAH_PRESETS.slice(3, 5).map((preset) => {
+                              const isSelected = recalcJumuahAttendance === preset.value;
+                              return (
+                                <button
+                                  key={preset.value}
+                                  type="button"
+                                  aria-pressed={isSelected}
+                                  aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                  title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                  onClick={() => setRecalcJumuahAttendance(preset.value)}
+                                  className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-all active:scale-[0.98] ${
+                                    isSelected
+                                      ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                      : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                  <span
+                                    className={`mt-0.5 text-[11px] leading-tight whitespace-nowrap ${
+                                      isSelected
+                                        ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {preset.sub}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Desktop view (sm: and above): balanced, evenly spaced 5-column layout */}
+                        <div className="mt-2.5 hidden sm:grid sm:grid-cols-5 sm:gap-2">
+                          {JUMUAH_PRESETS.map((preset) => {
+                            const isSelected = recalcJumuahAttendance === preset.value;
+                            return (
+                              <button
+                                key={preset.value}
+                                type="button"
+                                aria-pressed={isSelected}
+                                aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                onClick={() => setRecalcJumuahAttendance(preset.value)}
+                                className={`flex flex-col items-center justify-center rounded-xl py-2.5 px-3 text-center transition-all active:scale-[0.98] ${
+                                  isSelected
+                                    ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                    : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                <span
+                                  className={`mt-0.5 text-xs ${
+                                    isSelected
+                                      ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                      : 'text-slate-500 dark:text-slate-400'
+                                  }`}
+                                >
+                                  {preset.sub}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -647,6 +735,27 @@ export function SettingsModal({ open, onClose, onRecalculate }: SettingsModalPro
               </button>
             </div>
           )}
+        </section>
+
+        <section className="mt-8 border-t border-slate-200 pt-7 dark:border-slate-700" aria-labelledby="guide-title">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 id="guide-title" className="font-bold text-[var(--foreground)]">Feature guide</h3>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                Review how one-tap logging, daily pace, milestones, and offline backups work.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenFeatureGuide?.();
+              }}
+              className="min-h-[44px] shrink-0 rounded-xl border border-slate-300 px-4 text-sm font-bold text-[var(--foreground)] hover:border-emerald-600 hover:text-emerald-700 dark:border-slate-600 dark:hover:border-emerald-400 dark:hover:text-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"
+            >
+              Open Feature Guide
+            </button>
+          </div>
         </section>
 
         <section className="mt-8 border-t border-red-100 pt-7 dark:border-red-900/50" aria-labelledby="reset-title">

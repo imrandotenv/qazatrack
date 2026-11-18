@@ -32,7 +32,7 @@ export function Footer({ onInviteFriend, onSettings }: FooterProps) {
 
   return (
     <>
-      <footer className="border-t border-slate-900/[0.08] bg-[#FAF9F6] px-4 py-10 dark:border-white/[0.08] dark:bg-[#090D16] sm:px-6">
+      <footer className="border-t border-slate-900/[0.08] bg-[#FAF9F6] px-4 py-10 [overflow-anchor:none] dark:border-white/[0.08] dark:bg-[#090D16] sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-8 sm:grid-cols-[1.4fr_1fr]">
             <div>

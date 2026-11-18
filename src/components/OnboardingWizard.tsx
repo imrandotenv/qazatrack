@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQazaStore } from '../hooks/useQazaStore';
 import {
   calculateAttendedJumuah,
   calculatePayoffProjection,
   calculateTotalFridays,
   estimateFromDuration,
+  JUMUAH_PRESETS,
   PRAYER_RAKATS,
   totalRakatsRemaining,
 } from '../lib/calculator';
@@ -102,9 +103,29 @@ function StepperCard({
   );
 }
 
+function scrollToTop() {
+  if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
 export function OnboardingWizard() {
   const { completeOnboarding, state, updatePreferences } = useQazaStore();
   const [step, setStep] = useState<1 | 2>(1);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    scrollToTop();
+  }, [step]);
+
+  function handleGoToStep(targetStep: 1 | 2) {
+    setStep(targetStep);
+    scrollToTop();
+  }
   const [mode, setMode] = useState<EstimationMode>('duration');
   const initialProfile = state.settings.calculationProfile ?? 'brother';
   const [profile, setProfile] = useState<CalculationProfile>(initialProfile);
@@ -203,8 +224,14 @@ export function OnboardingWizard() {
   }
 
   function startPlan() {
+    scrollToTop();
     updatePreferences({ calculationProfile: profile });
     completeOnboarding(counts, paceMode, target);
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(() => {
+        scrollToTop();
+      });
+    }
   }
 
   return (
@@ -340,7 +367,7 @@ export function OnboardingWizard() {
                     <div className="space-y-4">
                       {/* Friday Jumu'ah Prayers Attended preset selector */}
                       <div className="rounded-2xl border border-slate-900/[0.08] bg-slate-50/60 p-4 dark:border-white/[0.08] dark:bg-slate-900/60">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start justify-between gap-3">
                           <div>
                             <span className="block text-base font-bold text-[var(--foreground)]">
                               Friday Jumu&apos;ah Prayers Attended
@@ -350,42 +377,109 @@ export function OnboardingWizard() {
                             </span>
                           </div>
                           {totalMonths > 0 && jumuahAttendance > 0 && (
-                            <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                            <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 shadow-xs dark:border-emerald-800/60 dark:bg-emerald-950/80 dark:text-emerald-300">
                               −{calculateAttendedJumuah(totalMonths, jumuahAttendance)} Dhuhr
                             </span>
                           )}
                         </div>
-                        <div className="mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
-                          {[
-                            { value: 0, label: '0%', sub: 'None' },
-                            { value: 0.25, label: '25%', sub: 'Rarely' },
-                            { value: 0.5, label: '50%', sub: 'Half' },
-                            { value: 0.75, label: '75%', sub: 'Most' },
-                            { value: 1, label: '100%', sub: 'All' },
-                          ].map((preset) => (
-                            <button
-                              key={preset.value}
-                              type="button"
-                              aria-pressed={jumuahAttendance === preset.value}
-                              onClick={() => setJumuahAttendance(preset.value)}
-                              className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-all ${
-                                jumuahAttendance === preset.value
-                                  ? 'bg-emerald-700 text-white shadow-sm dark:bg-emerald-500 dark:text-slate-950'
-                                  : 'bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
-                              }`}
-                            >
-                              <span className="text-xs sm:text-sm font-bold">{preset.label}</span>
-                              <span
-                                className={`text-[10px] ${
-                                  jumuahAttendance === preset.value
-                                    ? 'text-emerald-100 dark:text-slate-900 font-semibold'
-                                    : 'text-slate-500 dark:text-slate-400'
+
+                        {/* Mobile view: 2-row tactile pill grid (Row 1: grid-cols-3, Row 2: grid-cols-2) */}
+                        <div className="mt-3 space-y-2 sm:hidden">
+                          <div className="grid grid-cols-3 gap-2">
+                            {JUMUAH_PRESETS.slice(0, 3).map((preset) => {
+                              const isSelected = jumuahAttendance === preset.value;
+                              return (
+                                <button
+                                  key={preset.value}
+                                  type="button"
+                                  aria-pressed={isSelected}
+                                  aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                  title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                  onClick={() => setJumuahAttendance(preset.value)}
+                                  className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-all active:scale-[0.98] ${
+                                    isSelected
+                                      ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                      : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                  <span
+                                    className={`mt-0.5 text-[11px] leading-tight whitespace-nowrap ${
+                                      isSelected
+                                        ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {preset.sub}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {JUMUAH_PRESETS.slice(3, 5).map((preset) => {
+                              const isSelected = jumuahAttendance === preset.value;
+                              return (
+                                <button
+                                  key={preset.value}
+                                  type="button"
+                                  aria-pressed={isSelected}
+                                  aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                  title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                  onClick={() => setJumuahAttendance(preset.value)}
+                                  className={`flex flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-all active:scale-[0.98] ${
+                                    isSelected
+                                      ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                      : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
+                                  }`}
+                                >
+                                  <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                  <span
+                                    className={`mt-0.5 text-[11px] leading-tight whitespace-nowrap ${
+                                      isSelected
+                                        ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {preset.sub}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Desktop view (sm: and above): balanced, evenly spaced 5-column layout */}
+                        <div className="mt-3 hidden sm:grid sm:grid-cols-5 sm:gap-2">
+                          {JUMUAH_PRESETS.map((preset) => {
+                            const isSelected = jumuahAttendance === preset.value;
+                            return (
+                              <button
+                                key={preset.value}
+                                type="button"
+                                aria-pressed={isSelected}
+                                aria-label={`${preset.label} attended — ${preset.sub} (${preset.description})`}
+                                title={`${preset.label} — ${preset.sub}: ${preset.description}`}
+                                onClick={() => setJumuahAttendance(preset.value)}
+                                className={`flex flex-col items-center justify-center rounded-xl py-2.5 px-3 text-center transition-all active:scale-[0.98] ${
+                                  isSelected
+                                    ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/20 dark:border-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:ring-emerald-400/20'
+                                    : 'border border-slate-900/[0.08] bg-white text-[var(--foreground)] hover:border-slate-300 hover:bg-slate-50/80 dark:border-white/[0.08] dark:bg-[#111827] dark:hover:border-slate-700 dark:hover:bg-slate-800'
                                 }`}
                               >
-                                {preset.sub}
-                              </span>
-                            </button>
-                          ))}
+                                <span className="text-sm font-semibold tracking-tight">{preset.label}</span>
+                                <span
+                                  className={`mt-0.5 text-xs ${
+                                    isSelected
+                                      ? 'font-medium text-emerald-100 dark:text-slate-900'
+                                      : 'text-slate-500 dark:text-slate-400'
+                                  }`}
+                                >
+                                  {preset.sub}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -533,7 +627,7 @@ export function OnboardingWizard() {
               </div>
               <button
                 type="button"
-                onClick={() => setStep(2)}
+                onClick={() => handleGoToStep(2)}
                 className="mt-8 min-h-[52px] w-full rounded-xl bg-emerald-700 px-5 text-base font-bold text-white hover:bg-emerald-800 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400"
               >
                 Continue to choose my pace
@@ -584,7 +678,7 @@ export function OnboardingWizard() {
               </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <button type="button" onClick={() => setStep(1)} className="min-h-[52px] rounded-xl px-5 font-bold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Back</button>
+                <button type="button" onClick={() => handleGoToStep(1)} className="min-h-[52px] rounded-xl px-5 font-bold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800">Back</button>
                 <button type="button" onClick={startPlan} className="min-h-[52px] flex-1 rounded-xl bg-emerald-700 px-5 text-base font-bold text-white hover:bg-emerald-800 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400">Start Day 1</button>
               </div>
             </section>

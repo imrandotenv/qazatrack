@@ -5,6 +5,7 @@ import {
   calculatePayoffProjection,
   calculateTotalFridays,
   estimateFromDuration,
+  JUMUAH_PRESETS,
 } from '../src/lib/calculator';
 
 describe('calculator - Calculation Profiles & Fiqh Exemptions', () => {
@@ -22,16 +23,39 @@ describe('calculator - Calculation Profiles & Fiqh Exemptions', () => {
       assert.equal(calculateTotalFridays(-5), 0);
     });
 
-    it('calculates attended Jumuah with decimal and percentage ratios', () => {
-      // 52 fridays * 0.5 = 26
+    it('calculates attended Jumuah with decimal and percentage ratios for all presets', () => {
+      // 0% - None: 52 * 0 = 0
+      assert.equal(calculateAttendedJumuah(12, 0), 0);
+      assert.equal(calculateAttendedJumuah(12, 0.0), 0);
+
+      // 20% - Occasional: 52 * 0.2 = 10.4 -> 10
+      assert.equal(calculateAttendedJumuah(12, 0.2), 10);
+      assert.equal(calculateAttendedJumuah(12, 20), 10);
+
+      // 50% - Half: 52 * 0.5 = 26
       assert.equal(calculateAttendedJumuah(12, 0.5), 26);
-      // 52 fridays * 50% = 26
       assert.equal(calculateAttendedJumuah(12, 50), 26);
-      // 100% = 52
+
+      // 90% - Mostly: 52 * 0.9 = 46.8 -> 47
+      assert.equal(calculateAttendedJumuah(12, 0.9), 47);
+      assert.equal(calculateAttendedJumuah(12, 90), 47);
+
+      // 100% - Always: 52 * 1.0 = 52
       assert.equal(calculateAttendedJumuah(12, 1.0), 52);
       assert.equal(calculateAttendedJumuah(12, 100), 52);
-      // 0% = 0
-      assert.equal(calculateAttendedJumuah(12, 0), 0);
+    });
+
+    it('defines canonical JUMUAH_PRESETS matching required values and labels', () => {
+      assert.deepEqual(
+        JUMUAH_PRESETS.map((p) => ({ value: p.value, label: p.label, sub: p.sub, description: p.description })),
+        [
+          { value: 0, label: '0%', sub: 'None', description: 'Missed Fridays' },
+          { value: 0.2, label: '20%', sub: 'Occasional', description: 'Only a few Fridays' },
+          { value: 0.5, label: '50%', sub: 'Half', description: 'Roughly every other Friday' },
+          { value: 0.9, label: '90%', sub: 'Mostly', description: 'Almost every Friday' },
+          { value: 1, label: '100%', sub: 'Always', description: 'Never missed Jumu\'ah' },
+        ],
+      );
     });
   });
 
@@ -72,17 +96,73 @@ describe('calculator - Calculation Profiles & Fiqh Exemptions', () => {
       assert.equal(counts.fasts, 30);
     });
 
-    it('deducts Friday Jumuah with 50% preset attendance', () => {
-      const counts = estimateFromDuration({
+    it('deducts Friday Jumuah with all presets (20%, 50%, 90%, 100%) correctly from Dhuhr only', () => {
+      // 1 year = 12 months = 52 Fridays, base = 360 days
+      // 20% preset (0.2): 10 Fridays deducted
+      const counts20 = estimateFromDuration({
+        years: 1,
+        months: 0,
+        profile: 'brother',
+        jumuahAttendance: 0.2,
+      });
+      assert.equal(counts20.dhuhr, 350); // 360 - 10
+      assert.equal(counts20.fajr, 360);
+      assert.equal(counts20.asr, 360);
+      assert.equal(counts20.maghrib, 360);
+      assert.equal(counts20.isha, 360);
+      assert.equal(counts20.witr, 360);
+      assert.equal(counts20.fasts, 30);
+
+      // 50% preset (0.5): 26 Fridays deducted
+      const counts50 = estimateFromDuration({
         years: 1,
         months: 0,
         profile: 'brother',
         jumuahAttendance: 0.5,
       });
+      assert.equal(counts50.dhuhr, 334); // 360 - 26
+      assert.equal(counts50.fajr, 360);
 
-      // 52 fridays * 0.5 = 26 attended.
-      assert.equal(counts.dhuhr, 334);
-      assert.equal(counts.fajr, 360);
+      // 90% preset (0.9): 47 Fridays deducted
+      const counts90 = estimateFromDuration({
+        years: 1,
+        months: 0,
+        profile: 'brother',
+        jumuahAttendance: 0.9,
+      });
+      assert.equal(counts90.dhuhr, 313); // 360 - 47
+      assert.equal(counts90.fajr, 360);
+
+      // 100% preset (1.0): 52 Fridays deducted
+      const counts100 = estimateFromDuration({
+        years: 1,
+        months: 0,
+        profile: 'brother',
+        jumuahAttendance: 1.0,
+      });
+      assert.equal(counts100.dhuhr, 308); // 360 - 52
+      assert.equal(counts100.fajr, 360);
+
+      // Multi-year (2 years = 24 months = 104 Fridays, base = 720 days)
+      const countsMultiYear20 = estimateFromDuration({
+        years: 2,
+        months: 0,
+        profile: 'brother',
+        jumuahAttendance: 0.2,
+      });
+      // 104 * 0.2 = 20.8 -> 21
+      assert.equal(countsMultiYear20.dhuhr, 699); // 720 - 21
+      assert.equal(countsMultiYear20.fajr, 720);
+
+      const countsMultiYear90 = estimateFromDuration({
+        years: 2,
+        months: 0,
+        profile: 'brother',
+        jumuahAttendance: 0.9,
+      });
+      // 104 * 0.9 = 93.6 -> 94
+      assert.equal(countsMultiYear90.dhuhr, 626); // 720 - 94
+      assert.equal(countsMultiYear90.fajr, 720);
     });
 
     it('forces monthlyExemptionDays to 0 so stale sister settings never affect brother', () => {
@@ -119,6 +199,23 @@ describe('calculator - Calculation Profiles & Fiqh Exemptions', () => {
       assert.equal(counts.fajr, 350);
       assert.equal(counts.dhuhr, 298);
       assert.equal(counts.asr, 350);
+    });
+
+    it('clamps Dhuhr to 0 when Jumuah attended exceeds common missed days', () => {
+      // 1 month = 30 days base. 28 custom days -> 2 remaining common missed days.
+      // 1 month = 4 Fridays attended -> 4 Jumu'ah deducted.
+      // 2 - 4 = -2 -> clamped strictly at 0.
+      const counts = estimateFromDuration({
+        years: 0,
+        months: 1,
+        profile: 'brother',
+        jumuahAttendance: 1.0,
+        customExemptionDays: 28,
+      });
+
+      assert.equal(counts.fajr, 2);
+      assert.equal(counts.dhuhr, 0); // strictly clamped at 0
+      assert.equal(counts.asr, 2);
     });
   });
 

@@ -6,7 +6,17 @@ type HeaderProps = {
   streak: number;
   onShareMilestone?: () => void;
   onSettingsBackup?: () => void;
+  onOpenFeatureGuide?: () => void;
 };
+
+function GuideIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3m.08 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function ShareIcon() {
   return (
@@ -26,7 +36,7 @@ function SettingsIcon() {
   );
 }
 
-export function Header({ streak, onShareMilestone, onSettingsBackup }: HeaderProps) {
+export function Header({ streak, onShareMilestone, onSettingsBackup, onOpenFeatureGuide }: HeaderProps) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -79,6 +89,17 @@ export function Header({ streak, onShareMilestone, onSettingsBackup }: HeaderPro
           >
             <SettingsIcon />
           </button>
+          {onOpenFeatureGuide && (
+            <button
+              type="button"
+              onClick={onOpenFeatureGuide}
+              aria-label="Open feature guide"
+              title="Feature Guide"
+              className="inline-flex min-h-[38px] min-w-[38px] max-[380px]:min-h-[36px] max-[380px]:min-w-[36px] items-center justify-center rounded-xl p-2 text-slate-700 hover:bg-slate-200/70 dark:text-slate-200 dark:hover:bg-slate-800 sm:min-h-[48px] sm:min-w-[48px]"
+            >
+              <GuideIcon />
+            </button>
+          )}
           <button
             type="button"
             onClick={toggleTheme}

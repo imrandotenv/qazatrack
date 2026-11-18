@@ -23,6 +23,21 @@ const PRAYER_KEYS: readonly PrayerKey[] = [
 export const DAYS_PER_MONTH = 30;
 export const FASTS_PER_YEAR = 30;
 
+export type JumuahPreset = {
+  value: number;
+  label: string;
+  sub: string;
+  description: string;
+};
+
+export const JUMUAH_PRESETS: readonly JumuahPreset[] = [
+  { value: 0, label: '0%', sub: 'None', description: 'Missed Fridays' },
+  { value: 0.2, label: '20%', sub: 'Occasional', description: 'Only a few Fridays' },
+  { value: 0.5, label: '50%', sub: 'Half', description: 'Roughly every other Friday' },
+  { value: 0.9, label: '90%', sub: 'Mostly', description: 'Almost every Friday' },
+  { value: 1, label: '100%', sub: 'Always', description: 'Never missed Jumu\'ah' },
+] as const;
+
 export type DurationEstimateOptions = {
   years: number;
   months: number;

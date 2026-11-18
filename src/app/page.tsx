@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dashboard } from '../components/Dashboard';
 import { Header } from '../components/Header';
 import { MilestoneModal } from '../components/MilestoneModal';
 import { OnboardingWizard } from '../components/OnboardingWizard';
 import { SettingsModal } from '../components/SettingsModal';
+import { FeatureGuideModal } from '../components/FeatureGuideModal';
 import { Footer } from '../components/Footer';
 import { ReferralModal } from '../components/ReferralModal';
 import { useQazaStore } from '../hooks/useQazaStore';
@@ -77,6 +78,35 @@ export default function HomePage() {
   const [milestoneOpen, setMilestoneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [referralOpen, setReferralOpen] = useState(false);
+  const [featureGuideOpen, setFeatureGuideOpen] = useState(false);
+
+  const isOnboarded = hasCompletedOnboarding;
+
+  useEffect(() => {
+    if (hydrated && isOnboarded) {
+      try {
+        const seen = window.localStorage.getItem('qazatrack_feature_guide_seen');
+        if (!seen) {
+          setFeatureGuideOpen(true);
+        }
+      } catch {
+        // Ignore localStorage access restrictions
+      }
+    }
+  }, [hydrated, isOnboarded]);
+
+  function handleCloseFeatureGuide() {
+    setFeatureGuideOpen(false);
+    try {
+      window.localStorage.setItem('qazatrack_feature_guide_seen', 'true');
+    } catch {
+      // Ignore localStorage access restrictions
+    }
+  }
+
+  function handleOpenFeatureGuide() {
+    setFeatureGuideOpen(true);
+  }
 
   if (!hydrated) {
     return (
@@ -88,8 +118,6 @@ export default function HomePage() {
       </main>
     );
   }
-
-  const isOnboarded = hasCompletedOnboarding;
 
   return (
     <div className="min-h-screen bg-[var(--page-background)]">
@@ -106,13 +134,14 @@ export default function HomePage() {
           streak={state.streak}
           onShareMilestone={() => setMilestoneOpen(true)}
           onSettingsBackup={() => setSettingsOpen(true)}
+          onOpenFeatureGuide={handleOpenFeatureGuide}
         />
       )}
       {!isOnboarded ? (
         <>
           <OnboardingWizard />
           <section
-            className="mx-auto mb-12 mt-2 w-full max-w-3xl px-4 sm:px-8"
+            className="mx-auto mb-12 mt-2 w-full max-w-3xl px-4 [overflow-anchor:none] sm:px-8"
             aria-labelledby="faq-heading"
           >
             <details className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_10px_-3px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-[#111827]">
@@ -173,7 +202,15 @@ export default function HomePage() {
         referralCode={state.referralCode}
         onShareSuccess={incrementInviteCount}
       />
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenFeatureGuide={handleOpenFeatureGuide}
+      />
+      <FeatureGuideModal
+        open={featureGuideOpen}
+        onClose={handleCloseFeatureGuide}
+      />
       <ReferralModal
         open={referralOpen}
         referralCode={state.referralCode}
