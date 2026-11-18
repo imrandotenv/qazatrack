@@ -1,0 +1,43 @@
+{
+  "name": "qazatrack",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Privacy-first, offline-capable Missed Salah and Ramadan Fast debt calculator and daily payoff planner.",
+  "license": "MIT",
+  "author": "Md Imran Ahmad <https://github.com/imrandotenv>",
+  "homepage": "https://qazatrack.ceimran.in",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imrandotenv/qazatrack.git"
+  },
+  "keywords": [
+    "qaza",
+    "salah",
+    "ramadan",
+    "islamic-app",
+    "nextjs",
+    "typescript",
+    "tailwindcss",
+    "pwa",
+    "offline-first"
+  ],
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.15",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "10.4.19",
+    "postcss": "8.4.40",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.5.4"
+  }
+}

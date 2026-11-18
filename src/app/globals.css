@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --page-background: #faf9f6;
+  --card-background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #047857;
+  --secondary: #b45309;
+  --border: rgba(15, 23, 42, 0.08);
+}
+
+html.dark {
+  --page-background: #090d16;
+  --card-background: #111827;
+  --foreground: #f8fafc;
+  --primary: #10b981;
+  --secondary: #f59e0b;
+  --border: rgba(248, 250, 252, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--page-background);
+  color: var(--foreground);
+  font-size: 16px;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--page-background);
+  color: var(--foreground);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+button,
+input,
+label,
+a {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    opacity 180ms ease,
+    transform 120ms ease;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(5 150 105 / 0.4);
+}
+
+input[type='number'] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+/* Hide scrollbar for clean tab navigation */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
